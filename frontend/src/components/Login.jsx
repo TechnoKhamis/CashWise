@@ -1,74 +1,79 @@
-import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import authService from '../services/authService';
-import './Login.css';
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import authService from "../services/authService";
 
-function Login() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
+export default function Login() {
   const navigate = useNavigate();
+  const [form, setForm] = useState({ email: "", password: "" });
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError('');
-    setLoading(true);
+  const handleChange = (e) =>
+    setForm({ ...form, [e.target.name]: e.target.value });
 
+  const handleLogin = async () => {
+    if (!form.email || !form.password) {
+      setError("Fill in all fields");
+      return;
+    }
     try {
-      await authService.login(email, password);
-      navigate('/dashboard');
-    } catch (err) {
-      setError(err.response?.data || 'Login failed. Please try again.');
+      setLoading(true);
+      await authService.login(form);
+      navigate("/dashboard");
+    } catch {
+      setError("Invalid email or password");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="login-container">
-      <div className="login-card">
-        <h2>Welcome to CashWise</h2>
-        <p className="subtitle">Sign in to your account</p>
-        
-        {error && <div className="error-message">{error}</div>}
-        
-        <form onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label htmlFor="email">Email</label>
-            <input
-              type="email"
-              id="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="Enter your email"
-              required
-            />
-          </div>
+    <div className="auth-page">
+      <div className="auth-card">
+        <div className="logo">
+          Cash<span>Wise</span>
+        </div>
 
-          <div className="form-group">
-            <label htmlFor="password">Password</label>
-            <input
-              type="password"
-              id="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Enter your password"
-              required
-            />
-          </div>
+        <div className="auth-title">Welcome back</div>
+        <div className="auth-sub">Sign in to your account</div>
 
-          <button type="submit" className="btn-primary" disabled={loading}>
-            {loading ? 'Signing in...' : 'Sign In'}
-          </button>
-        </form>
+        {error && <div className="error-msg">{error}</div>}
 
-        <p className="signup-link">
-          Don't have an account? <Link to="/register">Sign up</Link>
-        </p>
+        <div className="form-group">
+          <label className="form-label">Email</label>
+          <input
+            className="form-input"
+            name="email"
+            type="email"
+            value={form.email}
+            onChange={handleChange}
+            placeholder="salman@example.com"
+          />
+        </div>
+        <div className="form-group">
+          <label className="form-label">Password</label>
+          <input
+            className="form-input"
+            name="password"
+            type="password"
+            value={form.password}
+            onChange={handleChange}
+            placeholder="••••••••"
+          />
+        </div>
+
+        <button
+          className="btn-primary"
+          onClick={handleLogin}
+          disabled={loading}
+        >
+          {loading ? "Signing in..." : "Sign In →"}
+        </button>
+
+        <div className="auth-link">
+          No account? <a onClick={() => navigate("/register")}>Create one</a>
+        </div>
       </div>
     </div>
   );
 }
-
-export default Login;

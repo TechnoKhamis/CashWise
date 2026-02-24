@@ -10,7 +10,7 @@ description = 'CashWise is a personal finance web app that helps users track inc
 
 java {
 	toolchain {
-		languageVersion = JavaLanguageVersion.of(17)
+		languageVersion = JavaLanguageVersion.of(19)
 	}
 }
 
