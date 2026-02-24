@@ -1,13 +1,13 @@
-package com.QuickTrade.QuickTrade;
+package com.example.cashwise;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public class QuickTradeApplication {
+public class CashwiseApplication {
 
 	public static void main(String[] args) {
-		SpringApplication.run(QuickTradeApplication.class, args);
+		SpringApplication.run(CashwiseApplication.class, args);
 	}
 
 }
