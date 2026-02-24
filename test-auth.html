@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CashWise Auth Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        .section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        input, button {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            font-size: 14px;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .result {
+            margin-top: 10px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 3px;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+        h2 {
+            margin-top: 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>CashWise Authentication Test</h1>
+
+    <div class="section">
+        <h2>Register</h2>
+        <input type="text" id="regName" placeholder="Full Name" value="John Doe">
+        <input type="email" id="regEmail" placeholder="Email" value="test@example.com">
+        <input type="password" id="regPassword" placeholder="Password" value="pass123">
+        <button onclick="register()">Register</button>
+        <div id="regResult" class="result"></div>
+    </div>
+
+    <div class="section">
+        <h2>Login</h2>
+        <input type="email" id="loginEmail" placeholder="Email" value="test@example.com">
+        <input type="password" id="loginPassword" placeholder="Password" value="pass123">
+        <button onclick="login()">Login</button>
+        <div id="loginResult" class="result"></div>
+    </div>
+
+    <div class="section">
+        <h2>Test Protected Endpoint</h2>
+        <button onclick="testProtected()">Test /api/hello</button>
+        <div id="protectedResult" class="result"></div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:8080/api';
+        let token = '';
+
+        async function register() {
+            const fullName = document.getElementById('regName').value;
+            const email = document.getElementById('regEmail').value;
+            const password = document.getElementById('regPassword').value;
+
+            try {
+                const response = await fetch(`${API_URL}/auth/register`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ fullName, email, password })
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    token = data.token;
+                    document.getElementById('regResult').textContent = 
+                        `Success!\nToken: ${token}\nEmail: ${data.email}\nName: ${data.fullName}`;
+                } else {
+                    document.getElementById('regResult').textContent = `Error: ${data}`;
+                }
+            } catch (error) {
+                document.getElementById('regResult').textContent = `Error: ${error.message}`;
+            }
+        }
+
+        async function login() {
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+
+            try {
+                const response = await fetch(`${API_URL}/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    token = data.token;
+                    document.getElementById('loginResult').textContent = 
+                        `Success!\nToken: ${token}\nEmail: ${data.email}\nName: ${data.fullName}`;
+                } else {
+                    document.getElementById('loginResult').textContent = `Error: ${data}`;
+                }
+            } catch (error) {
+                document.getElementById('loginResult').textContent = `Error: ${error.message}`;
+            }
+        }
+
+        async function testProtected() {
+            if (!token) {
+                document.getElementById('protectedResult').textContent = 'Please login first!';
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/hello`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                const data = await response.text();
+                
+                if (response.ok) {
+                    document.getElementById('protectedResult').textContent = `Success!\n${data}`;
+                } else {
+                    document.getElementById('protectedResult').textContent = `Error: ${response.status}`;
+                }
+            } catch (error) {
+                document.getElementById('protectedResult').textContent = `Error: ${error.message}`;
+            }
+        }
+    </script>
+</body>
+</html>
