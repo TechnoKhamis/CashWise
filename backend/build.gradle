@@ -42,12 +42,18 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-security'
 	
 	// Database drivers
-	runtimeOnly 'com.h2database:h2'  // ✅ Add this for H2
-	runtimeOnly 'org.postgresql:postgresql'  // Keep for production
+	runtimeOnly 'com.h2database:h2'
+	runtimeOnly 'org.postgresql:postgresql'
 	
+	// JWT
 	implementation 'io.jsonwebtoken:jjwt-api:0.12.3'
 	runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.3'
 	runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.12.3'
+	
+	// Stripe
+	implementation 'com.stripe:stripe-java:24.0.0'
+	
+	// Testing
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testImplementation 'org.springframework.security:spring-security-test'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'

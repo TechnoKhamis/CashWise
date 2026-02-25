@@ -1,7 +1,14 @@
 package com.example.cashwise.entity;
 
-import jakarta.persistence.*;
 import java.time.LocalDateTime;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.Table;
 
 @Entity
 @Table(name = "users")
@@ -26,6 +33,13 @@ public class User {
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
     
+
+    @Column(name = "stripe_customer_id", length = 255, unique = true)
+    private String stripeCustomerId;
+
+    @Column(name = "stripe_payment_method_id", length = 255)
+    private String stripePaymentMethodId;
+
     @PrePersist
     protected void onCreate() {
         if (createdAt == null) {
@@ -38,11 +52,12 @@ public class User {
     
     public User() {}
     
-    public User(String fullName, String email, String passwordHash) {
-        this.fullName = fullName;
-        this.email = email;
-        this.passwordHash = passwordHash;
-    }
+   public User(String fullName, String email, String passwordHash, String stripeCustomerId) {
+    this.fullName = fullName;
+    this.email = email;
+    this.passwordHash = passwordHash;
+    this.stripeCustomerId = stripeCustomerId;
+}
     
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
@@ -61,4 +76,10 @@ public class User {
     
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+
+    public String getStripeCustomerId() { return stripeCustomerId; }
+public void setStripeCustomerId(String stripeCustomerId) { this.stripeCustomerId = stripeCustomerId; }
+
+public String getStripePaymentMethodId() { return stripePaymentMethodId; }
+public void setStripePaymentMethodId(String stripePaymentMethodId) { this.stripePaymentMethodId = stripePaymentMethodId; }
 }

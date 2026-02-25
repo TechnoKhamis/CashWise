@@ -35,12 +35,17 @@ public class SecurityConfig {
                 corsConfig.setExposedHeaders(java.util.List.of("Authorization"));
                 return corsConfig;
             }))
-
+            .headers(headers -> headers.frameOptions(frame -> frame.disable()))
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/auth/**").permitAll()
+                .requestMatchers("/api/payment/**").authenticated() 
+                .requestMatchers("/api/users/**").authenticated() 
+                .requestMatchers("/h2-console/**").permitAll() 
+                .requestMatchers("/api/auth/**", "/api/payment/**").permitAll()
+
                 .anyRequest().authenticated()
             )
-            .sessionManagement(session -> session
+                        .sessionManagement(session -> session
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
             )
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);

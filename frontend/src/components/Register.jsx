@@ -9,7 +9,7 @@ import {
 } from "@stripe/react-stripe-js";
 import authService from "../services/authService";
 
-const stripePromise = loadStripe("pk_test_xxxxxxxxxxxx");
+const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUB_KEY);
 
 // ── Step 1 ──
 function StepOne({ onNext }) {
@@ -26,6 +26,10 @@ function StepOne({ onNext }) {
     setForm({ ...form, [e.target.name]: e.target.value });
 
   const handleSubmit = async () => {
+//    setLoading(true);
+  //        onNext(form);
+
+    //return;
     if (!form.fullName || !form.email || !form.password) {
       setError("Fill all fields");
       return;
@@ -151,38 +155,6 @@ function StepTwo({ userData, onNext, onSkip }) {
       <div className="auth-title">Link your card</div>
       <div className="auth-sub">Step 2 of 2 — For loan payments via Stripe</div>
       {error && <div className="error-msg">{error}</div>}
-
-      <div className="test-cards">
-        <div className="test-cards-title">⚡ Test Mode</div>
-        <div className="test-card-row">
-          <div>
-            <div className="test-card-num">4242 4242 4242 4242</div>
-            <div className="test-card-label">Visa · Always succeeds</div>
-          </div>
-        </div>
-        <div className="test-card-row">
-          <div>
-            <div className="test-card-num">4000 0000 0000 0002</div>
-            <div className="test-card-label">Visa · Declined</div>
-          </div>
-        </div>
-      </div>
-
-      <div className="form-group">
-        <label className="form-label">Your Bank</label>
-        <div className="bank-grid">
-          {banks.map((b) => (
-            <div
-              key={b.name}
-              className={`bank-option ${selectedBank === b.name ? "selected" : ""}`}
-              onClick={() => setSelectedBank(b.name)}
-            >
-              <div className="bank-emoji">{b.emoji}</div>
-              <div className="bank-name">{b.name}</div>
-            </div>
-          ))}
-        </div>
-      </div>
 
       <div className="form-group">
         <label className="form-label">Card Details</label>
