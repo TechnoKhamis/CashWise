@@ -1,0 +1,37 @@
+spring:
+  application:
+    name: cashwise
+ 
+  # ✅ H2 Database (Development) - ACTIVE
+  datasource:
+    url: jdbc:h2:mem:cashwise;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+ 
+ 
+  # ❌ PostgreSQL (Production) - COMMENTED OUT
+  # datasource:
+  #   url: jdbc:postgresql://localhost:5432/cashwise
+  #   username: admin
+  #   password: 123
+  #   driver-class-name: org.postgresql.Driver
+ 
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+server:
+  port: 8080
+ 
+jwt:
+  secret: mySecretKeyForJWTTokenGenerationThatIsAtLeast256BitsLong
+  expiration: 86400000
+ 
+stripe:
+  secret:
+    key: sk_test_51T4IvhC2jqLw5Y7ItEJXocdbqLnhEPMld9fub0KjAO18qUAINLCC4iYkmoG1B2RFqyzDTDYKs5ubVIzu2TlHXFUy00eMIGwV9x

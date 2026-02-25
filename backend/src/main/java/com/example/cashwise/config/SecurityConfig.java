@@ -28,24 +28,22 @@ public class SecurityConfig {
             .csrf(csrf -> csrf.disable())
            .cors(cors -> cors.configurationSource(request -> {
                 var corsConfig = new org.springframework.web.cors.CorsConfiguration();
-                corsConfig.addAllowedOriginPattern("http://localhost:*");
+                corsConfig.addAllowedOriginPattern("*");
                 corsConfig.addAllowedMethod("*");
                 corsConfig.addAllowedHeader("*");
                 corsConfig.setAllowCredentials(true);
-                corsConfig.setExposedHeaders(java.util.List.of("Authorization"));
                 return corsConfig;
             }))
             .headers(headers -> headers.frameOptions(frame -> frame.disable()))
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/auth/**").permitAll()
                 .requestMatchers("/api/payment/**").authenticated() 
+                .requestMatchers("/api/stripe/**").authenticated()
                 .requestMatchers("/api/users/**").authenticated() 
                 .requestMatchers("/h2-console/**").permitAll() 
-                .requestMatchers("/api/auth/**", "/api/payment/**").permitAll()
-
                 .anyRequest().authenticated()
             )
-                        .sessionManagement(session -> session
+            .sessionManagement(session -> session
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
             )
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
