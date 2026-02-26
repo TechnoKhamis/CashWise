@@ -238,7 +238,7 @@ body {
 
 
 /* ── GRID BACKGROUND ── */
-body::before {
+.auth-page::before {
   content: '';
   position: fixed;
   inset: 0;
@@ -251,7 +251,7 @@ body::before {
 }
 
 /* ── GLOW EFFECTS ── */
-body::after {
+.auth-page::after {
   content: '';
   position: fixed;
   top: -100px;
