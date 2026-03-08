@@ -10,7 +10,7 @@ description = 'CashWise is a personal finance web app that helps users track inc
 
 java {
 	toolchain {
-		languageVersion = JavaLanguageVersion.of(25)
+		languageVersion = JavaLanguageVersion.of(19)
 	}
 }
 
@@ -55,6 +55,7 @@ dependencies {
 	
 	// Testing
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	testImplementation 'org.springframework.boot:spring-boot-starter-web'
 	testImplementation 'org.springframework.security:spring-security-test'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
