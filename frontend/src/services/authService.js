@@ -5,7 +5,7 @@ const API_URL = import.meta.env.VITE_API_URL;
 
 const authService = {
   login: async ({ email, password }) => {
-    const response = await axios.post(`${API_URL}/login`, { email, password }); // ✅ Fixed
+    const response = await axios.post(`${API_URL}/api/auth/login`, { email, password });
     if (response.data.token) {
       localStorage.setItem("token", response.data.token);
       localStorage.setItem("user", JSON.stringify(response.data));
@@ -14,7 +14,7 @@ const authService = {
   },
 
   register: async ({ fullName, email, password, currency = "BHD" }) => {
-    const response = await axios.post(`${API_URL}/register`, { // ✅ Fixed
+    const response = await axios.post(`${API_URL}/api/auth/register`, {
       fullName,
       email,
       password,
