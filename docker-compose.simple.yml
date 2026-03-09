@@ -1,0 +1,64 @@
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:16-alpine
+    container_name: cashwise-db
+    environment:
+      POSTGRES_DB: cashwise
+      POSTGRES_USER: cashwise
+      POSTGRES_PASSWORD: cashwise123
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - cashwise-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U cashwise"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Spring Boot Backend (using pre-built jar)
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.simple
+    container_name: cashwise-backend
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/cashwise
+      SPRING_DATASOURCE_USERNAME: cashwise
+      SPRING_DATASOURCE_PASSWORD: cashwise123
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      JWT_SECRET: mySecretKeyForJWTTokenGenerationThatIsAtLeast256BitsLong
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-sk_test_your_stripe_key}
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - cashwise-network
+    restart: unless-stopped
+
+  # React Frontend
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: cashwise-frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - cashwise-network
+    restart: unless-stopped
+
+networks:
+  cashwise-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+    driver: local

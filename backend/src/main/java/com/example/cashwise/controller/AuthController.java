@@ -41,40 +41,47 @@ public class AuthController {
 
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody RegisterRequest request) {
-        if (userRepository.existsByEmail(request.getEmail())) {
-            return ResponseEntity.badRequest().body("Email already exists");
-        }
-
-        // Create Stripe customer (skip if test key not configured)
-        String stripeCustomerId = null;
-        if (stripeSecretKey != null && stripeSecretKey.startsWith("sk_test_") && !stripeSecretKey.contains("your_stripe")) {
-            try {
-                Stripe.apiKey = stripeSecretKey; 
-
-                CustomerCreateParams params = CustomerCreateParams.builder()
-                        .setName(request.getFullName())
-                        .setEmail(request.getEmail())
-                        .build();
-
-                Customer stripeCustomer = Customer.create(params);
-                stripeCustomerId = stripeCustomer.getId();
-            } catch (Exception e) {
-                System.out.println("Stripe customer creation failed (continuing without): " + e.getMessage());
+        try {
+            if (userRepository.existsByEmail(request.getEmail())) {
+                return ResponseEntity.badRequest().body("Email already exists");
             }
+
+            // Create Stripe customer (skip if test key not configured)
+            String stripeCustomerId = null;
+            if (stripeSecretKey != null && stripeSecretKey.startsWith("sk_test_") && !stripeSecretKey.contains("your_stripe")) {
+                try {
+                    Stripe.apiKey = stripeSecretKey; 
+
+                    CustomerCreateParams params = CustomerCreateParams.builder()
+                            .setName(request.getFullName())
+                            .setEmail(request.getEmail())
+                            .build();
+
+                    Customer stripeCustomer = Customer.create(params);
+                    stripeCustomerId = stripeCustomer.getId();
+                } catch (Exception e) {
+                    System.out.println("Stripe customer creation failed (continuing without): " + e.getMessage());
+                    e.printStackTrace();
+                }
+            }
+
+            // Save user with stripeCustomerId
+            User user = new User(
+                request.getFullName(),
+                request.getEmail(),
+                passwordEncoder.encode(request.getPassword()),
+                stripeCustomerId
+            );
+
+            userRepository.save(user);
+
+            String token = jwtUtil.generateToken(user.getEmail());
+            return ResponseEntity.ok(new AuthResponse(token, user.getEmail(), user.getFullName()));
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Registration failed: " + e.getMessage());
         }
-
-        // Save user with stripeCustomerId
-        User user = new User(
-            request.getFullName(),
-            request.getEmail(),
-            passwordEncoder.encode(request.getPassword()),
-            stripeCustomerId
-        );
-
-        userRepository.save(user);
-
-        String token = jwtUtil.generateToken(user.getEmail());
-        return ResponseEntity.ok(new AuthResponse(token, user.getEmail(), user.getFullName()));
     }
 
     @PostMapping("/login")

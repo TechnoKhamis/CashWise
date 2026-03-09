@@ -1,0 +1,51 @@
+services:
+  # Spring Boot Backend (with H2 database)
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: cashwise-backend
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:h2:mem:cashwise;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+      SPRING_DATASOURCE_DRIVER_CLASS_NAME: org.h2.Driver
+      SPRING_DATASOURCE_USERNAME: sa
+      SPRING_DATASOURCE_PASSWORD: 
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SPRING_JPA_DATABASE_PLATFORM: org.hibernate.dialect.H2Dialect
+      SPRING_H2_CONSOLE_ENABLED: true
+      JWT_SECRET: mySecretKeyForJWTTokenGenerationThatIsAtLeast256BitsLong
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-sk_test_51T4IvhC2jqLw5Y7ItEJXocdbqLnhEPMld9fub0KjAO18qUAINLCC4iYkmoG1B2RFqyzDTDYKs5ubVIzu2TlHXFUy00eMIGwV9x}
+    ports:
+      - "8080:8080"
+    networks:
+      - cashwise-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # React Frontend
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: cashwise-frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - cashwise-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:80/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+networks:
+  cashwise-network:
+    driver: bridge

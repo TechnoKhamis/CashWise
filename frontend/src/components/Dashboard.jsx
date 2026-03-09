@@ -17,6 +17,7 @@ function Dashboard() {
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showDrawer, setShowDrawer] = useState(false);
+  const [showStripeDrawer, setShowStripeDrawer] = useState(false);
   const [txType, setTxType] = useState('EXPENSE');
   const [paymentMode, setPaymentMode] = useState('manual');
   const [chartData, setChartData] = useState({
@@ -33,6 +34,13 @@ function Dashboard() {
     description: '',
     transactionDate: new Date().toISOString().split('T')[0],
     isManual: true
+  });
+  
+  const [stripeFormData, setStripeFormData] = useState({
+    recipientStripeId: '',
+    amount: '',
+    categoryId: '',
+    description: ''
   });
 
   useEffect(() => {
@@ -104,6 +112,31 @@ function Dashboard() {
     e.preventDefault();
     try {
       const token = authService.getToken();
+      
+      // If Stripe mode, charge the card first
+      if (paymentMode === 'stripe') {
+        const chargeRes = await fetch('http://localhost:8080/api/payment/charge', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            amount: parseFloat(formData.amount),
+            currency: currency,
+            description: formData.description || 'Transaction payment'
+          })
+        });
+
+        const chargeData = await chargeRes.json();
+        
+        if (!chargeRes.ok || !chargeData.success) {
+          alert('Payment failed: ' + (chargeData.error || 'Unknown error'));
+          return;
+        }
+      }
+
+      // Create transaction record
       const res = await fetch('http://localhost:8080/api/transactions', {
         method: 'POST',
         headers: {
@@ -128,10 +161,77 @@ function Dashboard() {
           transactionDate: new Date().toISOString().split('T')[0],
           isManual: true
         });
+        setPaymentMode('manual');
         fetchDashboardData();
+        
+        if (paymentMode === 'stripe') {
+          alert('Payment successful! Transaction recorded.');
+        }
       }
     } catch (err) {
       console.error('Error creating transaction:', err);
+      alert('Error: ' + err.message);
+    }
+  };
+
+  const handleStripePayment = async (e) => {
+    e.preventDefault();
+    try {
+      const token = authService.getToken();
+      
+      // Charge via Stripe
+      const chargeRes = await fetch('http://localhost:8080/api/payment/charge', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          amount: parseFloat(stripeFormData.amount),
+          currency: currency,
+          description: stripeFormData.description || 'Stripe payment',
+          recipientStripeId: stripeFormData.recipientStripeId
+        })
+      });
+
+      const chargeData = await chargeRes.json();
+      
+      if (!chargeRes.ok || !chargeData.success) {
+        alert('Payment failed: ' + (chargeData.error || 'Unknown error'));
+        return;
+      }
+
+      // Create transaction record
+      const res = await fetch('http://localhost:8080/api/transactions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          amount: parseFloat(stripeFormData.amount),
+          categoryId: parseInt(stripeFormData.categoryId),
+          description: stripeFormData.description,
+          type: 'EXPENSE',
+          transactionDate: new Date().toISOString().split('T')[0],
+          isManual: false
+        })
+      });
+      
+      if (res.ok) {
+        setShowStripeDrawer(false);
+        setStripeFormData({
+          recipientStripeId: '',
+          amount: '',
+          categoryId: '',
+          description: ''
+        });
+        fetchDashboardData();
+        alert('Payment successful! Money sent via Stripe.');
+      }
+    } catch (err) {
+      console.error('Error processing Stripe payment:', err);
+      alert('Error: ' + err.message);
     }
   };
 
@@ -226,8 +326,11 @@ function Dashboard() {
         </div>
 
         <div className="quick-actions">
-          <button className="qa-btn primary" onClick={() => setShowDrawer(true)}>+ Add Transaction</button>
-          <button className="qa-btn stripe-qa">💳 Pay via Stripe</button>
+          <button className="qa-btn primary" onClick={() => {
+            setPaymentMode('manual');
+            setShowDrawer(true);
+          }}>+ Add Transaction</button>
+          <button className="qa-btn stripe-qa" onClick={() => setShowStripeDrawer(true)}>💳 Pay via Stripe</button>
           <button className="qa-btn" onClick={() => navigate('/budget')}>📊 View Budgets</button>
           <button className="qa-btn" onClick={() => navigate('/analytics')}>📈 Analytics</button>
         </div>
@@ -498,6 +601,83 @@ function Dashboard() {
           )}
 
           <button type="submit" className="btn-primary">Save Transaction →</button>
+        </form>
+      </div>
+
+      {/* STRIPE PAYMENT DRAWER */}
+      {showStripeDrawer && <div className="drawer-overlay open" onClick={() => setShowStripeDrawer(false)}></div>}
+      <div className={`drawer ${showStripeDrawer ? 'open' : ''}`}>
+        <div className="drawer-close" onClick={() => setShowStripeDrawer(false)}>✕</div>
+        <div className="drawer-title">Pay via Stripe</div>
+        <div className="drawer-subtitle">Send money to a Stripe account</div>
+
+        <form onSubmit={handleStripePayment}>
+          {/* Recipient Stripe ID */}
+          <div className="form-group">
+            <label className="form-label">RECIPIENT STRIPE CUSTOMER ID</label>
+            <input 
+              className="form-input" 
+              type="text"
+              placeholder="cus_xxxxxxxxxxxxx"
+              value={stripeFormData.recipientStripeId}
+              onChange={(e) => setStripeFormData({...stripeFormData, recipientStripeId: e.target.value})}
+            />
+            <div style={{fontSize: '10px', color: 'var(--muted)', marginTop: '6px'}}>
+              Enter recipient's Stripe Customer ID (starts with cus_). Leave empty to test without recipient.
+            </div>
+          </div>
+
+          {/* Amount */}
+          <div className="form-group">
+            <label className="form-label">AMOUNT ({currency})</label>
+            <input 
+              className="form-input" 
+              type="number" 
+              step="0.001"
+              placeholder="0.000"
+              value={stripeFormData.amount}
+              onChange={(e) => setStripeFormData({...stripeFormData, amount: e.target.value})}
+              required
+            />
+          </div>
+
+          {/* Category */}
+          <div className="form-group">
+            <label className="form-label">CATEGORY</label>
+            <select 
+              className="form-input"
+              value={stripeFormData.categoryId}
+              onChange={(e) => setStripeFormData({...stripeFormData, categoryId: e.target.value})}
+              required
+            >
+              <option value="">Select category</option>
+              {categories
+                .filter(cat => cat.type === 'EXPENSE')
+                .map(cat => (
+                  <option key={cat.id} value={cat.id}>
+                    {cat.emoji} {cat.name}
+                  </option>
+                ))}
+            </select>
+          </div>
+
+          {/* Description */}
+          <div className="form-group">
+            <label className="form-label">DESCRIPTION</label>
+            <textarea 
+              className="form-input"
+              placeholder="e.g. Payment to John for dinner"
+              value={stripeFormData.description}
+              onChange={(e) => setStripeFormData({...stripeFormData, description: e.target.value})}
+              rows="3"
+            />
+          </div>
+
+          <div className="mode-info stripe-info">
+            💳 This will charge your connected Stripe payment method and send the money to the recipient's Stripe account.
+          </div>
+
+          <button type="submit" className="btn-primary">Send Payment via Stripe →</button>
         </form>
       </div>
     </div>
